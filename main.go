@@ -65,6 +65,23 @@ func (cmd *command) GetStdPipes() (io.WriteCloser, io.ReadCloser, error) {
 	return stdin, stdout, err
 }
 
+func connect(src io.ReadCloser, dst io.WriteCloser) {
+	go func() {
+		_, err := io.Copy(dst, src)
+		if err != nil {
+			fmt.Println(err)
+		}
+		err = src.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+		err = dst.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}()
+}
+
 func pipeCommands(f *os.File, rf []*command) {
 	for _, cmd := range rf {
 		cmd.Init()
@@ -75,20 +92,7 @@ func pipeCommands(f *os.File, rf []*command) {
 		}
 		cmd.Start()
 
-		go func() {
-			_, err := io.Copy(stdin, f)
-			if err != nil {
-				fmt.Println(err)
-			}
-			err = f.Close()
-			if err != nil {
-				fmt.Println(err)
-			}
-			err = stdin.Close()
-			if err != nil {
-				fmt.Println(err)
-			}
-		}()
+		connect(f, stdin)
 
 		go func() {
 			var err error
