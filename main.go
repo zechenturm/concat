@@ -65,6 +65,47 @@ func (cmd *command) GetStdPipes() (io.WriteCloser, io.ReadCloser, error) {
 	return stdin, stdout, err
 }
 
+func pipeCommands(f *os.File, rf []*command) {
+	for _, cmd := range rf {
+		cmd.Init()
+		stdin, stdout, err := cmd.GetStdPipes()
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		cmd.Start()
+
+		go func() {
+			_, err := io.Copy(stdin, f)
+			if err != nil {
+				fmt.Println(err)
+			}
+			err = f.Close()
+			if err != nil {
+				fmt.Println(err)
+			}
+			err = stdin.Close()
+			if err != nil {
+				fmt.Println(err)
+			}
+		}()
+
+		go func() {
+			var err error
+			var n int
+			data := make([]byte, BufferSize)
+			for err == nil {
+				n, err = stdout.Read(data)
+				fmt.Print(string(data[:n]))
+			}
+		}()
+		err = cmd.Wait()
+		if err != nil {
+			fmt.Println("Error for", f.Name(), ":", err)
+		}
+	}
+}
+
 func main() {
 	if len(os.Args) != 2 {
 		fmt.Println("Usage: apply <configfile>")
@@ -91,44 +132,7 @@ func main() {
 		}
 		rf := in.RelevantCmds(file)
 		if rf != nil {
-			for _, cmd := range rf {
-				cmd.Init()
-				stdin, stdout, err := cmd.GetStdPipes()
-				if err != nil {
-					fmt.Println(err)
-					continue
-				}
-				cmd.Start()
-
-				go func() {
-					_, err := io.Copy(stdin, f)
-					if err != nil {
-						fmt.Println(err)
-					}
-					err = f.Close()
-					if err != nil {
-						fmt.Println(err)
-					}
-					err = stdin.Close()
-					if err != nil {
-						fmt.Println(err)
-					}
-				}()
-
-				go func() {
-					var err error
-					var n int
-					data := make([]byte, BufferSize)
-					for err == nil {
-						n, err = stdout.Read(data)
-						fmt.Print(string(data[:n]))
-					}
-				}()
-				err = cmd.Wait()
-				if err != nil {
-					fmt.Println("Error for", file, ":", err)
-				}
-			}
+			pipeCommands(f, rf)
 		} else {
 			var n int
 			data := make([]byte, BufferSize)
