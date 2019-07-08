@@ -10,6 +10,9 @@ import (
 	"github.com/go-yaml/yaml"
 )
 
+// BufferSize specifies the size of the read and write buffers used
+const BufferSize = 4
+
 type command struct {
 	Files []string `yaml:"files"`
 	Cmd   string   `yaml:"cmd"`
@@ -95,7 +98,7 @@ func main() {
 				go func() {
 					var err error
 					var n int
-					data := make([]byte, 4)
+					data := make([]byte, BufferSize)
 					f, err := os.Open(file)
 					if err != nil {
 						fmt.Println(err)
@@ -112,7 +115,7 @@ func main() {
 				go func() {
 					var err error
 					var n int
-					data := make([]byte, 4)
+					data := make([]byte, BufferSize)
 					for err == nil {
 						n, err = stdout.Read(data)
 						fmt.Print(string(data[:n]))
