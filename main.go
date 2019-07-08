@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 
@@ -25,49 +24,6 @@ func (in *input) RelevantCmd(file string) *recipe {
 		}
 	}
 	return nil
-}
-
-func connect(src io.ReadCloser, dst io.WriteCloser) {
-	go func() {
-		_, err := io.Copy(dst, src)
-		if err != nil {
-			fmt.Println(err)
-		}
-		err = src.Close()
-		if err != nil {
-			fmt.Println(err)
-		}
-		err = dst.Close()
-		if err != nil {
-			fmt.Println(err)
-		}
-	}()
-}
-
-func pipeCommands(f *os.File, cmd *command) {
-	cmd.Init()
-	stdin, stdout, err := cmd.GetStdPipes()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	cmd.Start()
-
-	connect(f, stdin)
-
-	go func() {
-		var err error
-		var n int
-		data := make([]byte, BufferSize)
-		for err == nil {
-			n, err = stdout.Read(data)
-			fmt.Print(string(data[:n]))
-		}
-	}()
-	err = cmd.Wait()
-	if err != nil {
-		fmt.Println("Error for", f.Name(), ":", err)
-	}
 }
 
 func main() {
@@ -96,7 +52,9 @@ func main() {
 		}
 		rf := in.RelevantCmd(file)
 		if rf != nil {
-			pipeCommands(f, &rf.Cmds[0])
+			// pipeCommands(f, &rf.Cmds[0])
+			rf.Init(f)
+			rf.Execute()
 		} else {
 			var n int
 			data := make([]byte, BufferSize)

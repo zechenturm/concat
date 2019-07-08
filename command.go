@@ -29,3 +29,11 @@ func (cmd *command) GetStdPipes() (io.WriteCloser, io.ReadCloser, error) {
 	stdout, err := cmd.cmnd.StdoutPipe()
 	return stdin, stdout, err
 }
+
+func (cmd *command) GetStdout() (io.ReadCloser, error) {
+	return cmd.cmnd.StdoutPipe()
+}
+
+func (cmd *command) GetStdin() (io.WriteCloser, error) {
+	return cmd.cmnd.StdinPipe()
+}
