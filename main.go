@@ -13,12 +13,12 @@ import (
 const BufferSize = 4
 
 type input struct {
-	Files []string  `yaml:"files"`
-	Cmds  []command `yaml:"cmds"`
+	Files []string `yaml:"files"`
+	Cmds  []recipe `yaml:"recipes"`
 }
 
 // RelevantCmd returns the commands relevant to the file(name) given
-func (in *input) RelevantCmd(file string) *command {
+func (in *input) RelevantCmd(file string) *recipe {
 	for _, c := range in.Cmds {
 		if c.IsRelevant(file) {
 			return &c
@@ -96,7 +96,7 @@ func main() {
 		}
 		rf := in.RelevantCmd(file)
 		if rf != nil {
-			pipeCommands(f, rf)
+			pipeCommands(f, &rf.Cmds[0])
 		} else {
 			var n int
 			data := make([]byte, BufferSize)

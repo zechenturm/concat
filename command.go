@@ -6,20 +6,9 @@ import (
 )
 
 type command struct {
-	Files []string `yaml:"files"`
-	Cmd   string   `yaml:"cmd"`
-	Args  []string `yaml:"args"`
-	cmnd  *exec.Cmd
-}
-
-// IsRelevant checks if the comand is relevant to the file(name) passed in
-func (cmd *command) IsRelevant(file string) bool {
-	for _, matchFile := range cmd.Files {
-		if file == matchFile {
-			return true
-		}
-	}
-	return false
+	Cmd  string   `yaml:"cmd"`
+	Args []string `yaml:"args"`
+	cmnd *exec.Cmd
 }
 
 // Init builds an exec.Cmd to exectute
