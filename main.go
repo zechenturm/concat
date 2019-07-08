@@ -97,17 +97,12 @@ func main() {
 
 				go func() {
 					var err error
-					var n int
-					data := make([]byte, BufferSize)
 					f, err := os.Open(file)
 					if err != nil {
 						fmt.Println(err)
 						return
 					}
-					for err == nil {
-						n, err = f.Read(data)
-						stdin.Write(data[:n])
-					}
+					io.Copy(stdin, f)
 					f.Close()
 					stdin.Close()
 				}()
