@@ -25,15 +25,14 @@ type input struct {
 	Cmds  []command `yaml:"cmds"`
 }
 
-// RelevantCmds returns the commands relevant to the file(name) given
-func (in *input) RelevantCmds(file string) []*command {
-	var commands []*command
+// RelevantCmd returns the commands relevant to the file(name) given
+func (in *input) RelevantCmd(file string) *command {
 	for _, c := range in.Cmds {
 		if c.IsRelevant(file) {
-			commands = append(commands, &c)
+			return &c
 		}
 	}
-	return commands
+	return nil
 }
 
 // IsRelevant checks if the comand is relevant to the file(name) passed in
@@ -82,31 +81,29 @@ func connect(src io.ReadCloser, dst io.WriteCloser) {
 	}()
 }
 
-func pipeCommands(f *os.File, rf []*command) {
-	for _, cmd := range rf {
-		cmd.Init()
-		stdin, stdout, err := cmd.GetStdPipes()
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-		cmd.Start()
+func pipeCommands(f *os.File, cmd *command) {
+	cmd.Init()
+	stdin, stdout, err := cmd.GetStdPipes()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	cmd.Start()
 
-		connect(f, stdin)
+	connect(f, stdin)
 
-		go func() {
-			var err error
-			var n int
-			data := make([]byte, BufferSize)
-			for err == nil {
-				n, err = stdout.Read(data)
-				fmt.Print(string(data[:n]))
-			}
-		}()
-		err = cmd.Wait()
-		if err != nil {
-			fmt.Println("Error for", f.Name(), ":", err)
+	go func() {
+		var err error
+		var n int
+		data := make([]byte, BufferSize)
+		for err == nil {
+			n, err = stdout.Read(data)
+			fmt.Print(string(data[:n]))
 		}
+	}()
+	err = cmd.Wait()
+	if err != nil {
+		fmt.Println("Error for", f.Name(), ":", err)
 	}
 }
 
@@ -134,7 +131,7 @@ func main() {
 			fmt.Println(err)
 			continue
 		}
-		rf := in.RelevantCmds(file)
+		rf := in.RelevantCmd(file)
 		if rf != nil {
 			pipeCommands(f, rf)
 		} else {
