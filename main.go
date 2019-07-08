@@ -84,6 +84,11 @@ func main() {
 	}
 
 	for _, file := range in.Files {
+		f, err := os.Open(file)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
 		rf := in.RelevantCmds(file)
 		if rf != nil {
 			for _, cmd := range rf {
@@ -96,15 +101,18 @@ func main() {
 				cmd.Start()
 
 				go func() {
-					var err error
-					f, err := os.Open(file)
+					_, err := io.Copy(stdin, f)
 					if err != nil {
 						fmt.Println(err)
-						return
 					}
-					io.Copy(stdin, f)
-					f.Close()
-					stdin.Close()
+					err = f.Close()
+					if err != nil {
+						fmt.Println(err)
+					}
+					err = stdin.Close()
+					if err != nil {
+						fmt.Println(err)
+					}
 				}()
 
 				go func() {
@@ -122,12 +130,12 @@ func main() {
 				}
 			}
 		} else {
-			data, err := ioutil.ReadFile(file)
-			if err != nil {
-				fmt.Println(err)
-				continue
+			var n int
+			data := make([]byte, BufferSize)
+			for err == nil {
+				n, err = f.Read(data)
+				fmt.Print(string(data[:n]))
 			}
-			fmt.Print(string(data))
 		}
 	}
 }
