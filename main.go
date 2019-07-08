@@ -56,8 +56,10 @@ func (cmd *command) Wait() error {
 	return cmd.cmnd.Wait()
 }
 
-func (cmd *command) GetStdPipes() (io.ReadCloser, error) {
-	return cmd.cmnd.StdoutPipe()
+func (cmd *command) GetStdPipes() (io.WriteCloser, io.ReadCloser, error) {
+	stdin, err := cmd.cmnd.StdinPipe()
+	stdout, err := cmd.cmnd.StdoutPipe()
+	return stdin, stdout, err
 }
 
 func main() {
@@ -83,12 +85,30 @@ func main() {
 		if rf != nil {
 			for _, cmd := range rf {
 				cmd.Init()
-				stdout, err := cmd.GetStdPipes()
+				stdin, stdout, err := cmd.GetStdPipes()
 				if err != nil {
 					fmt.Println(err)
 					continue
 				}
 				cmd.Start()
+
+				go func() {
+					var err error
+					var n int
+					data := make([]byte, 4)
+					f, err := os.Open(file)
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+					for err == nil {
+						n, err = f.Read(data)
+						stdin.Write(data[:n])
+					}
+					f.Close()
+					stdin.Close()
+				}()
+
 				go func() {
 					var err error
 					var n int
