@@ -5,20 +5,12 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"os/exec"
 
 	"github.com/go-yaml/yaml"
 )
 
 // BufferSize specifies the size of the read and write buffers used
 const BufferSize = 4
-
-type command struct {
-	Files []string `yaml:"files"`
-	Cmd   string   `yaml:"cmd"`
-	Args  []string `yaml:"args"`
-	cmnd  *exec.Cmd
-}
 
 type input struct {
 	Files []string  `yaml:"files"`
@@ -33,35 +25,6 @@ func (in *input) RelevantCmd(file string) *command {
 		}
 	}
 	return nil
-}
-
-// IsRelevant checks if the comand is relevant to the file(name) passed in
-func (cmd *command) IsRelevant(file string) bool {
-	for _, matchFile := range cmd.Files {
-		if file == matchFile {
-			return true
-		}
-	}
-	return false
-}
-
-// Init builds an exec.Cmd to exectute
-func (cmd *command) Init() {
-	cmd.cmnd = exec.Command(cmd.Cmd, cmd.Args...)
-}
-
-func (cmd *command) Start() error {
-	return cmd.cmnd.Start()
-}
-
-func (cmd *command) Wait() error {
-	return cmd.cmnd.Wait()
-}
-
-func (cmd *command) GetStdPipes() (io.WriteCloser, io.ReadCloser, error) {
-	stdin, err := cmd.cmnd.StdinPipe()
-	stdout, err := cmd.cmnd.StdoutPipe()
-	return stdin, stdout, err
 }
 
 func connect(src io.ReadCloser, dst io.WriteCloser) {
