@@ -44,7 +44,6 @@ func (r *recipe) Init(file io.ReadCloser) {
 
 	if r.CmdCount() >= 2 {
 		for i := 1; i < r.CmdCount(); i++ {
-			errorln(i)
 			cout0, err := r.Cmds[i-1].GetStdout()
 			if err != nil {
 				errorln(err)
