@@ -21,10 +21,12 @@ func (r *recipe) IsRelevant(file string) bool {
 	return false
 }
 
+// CmdCount returns the total number of commands in the recipe
 func (r *recipe) CmdCount() int {
 	return len(r.Cmds)
 }
 
+// Init initialises the recipe
 func (r *recipe) Init(file io.ReadCloser) {
 	if len(r.Cmds) == 0 {
 		return
@@ -73,6 +75,7 @@ func (r *recipe) Init(file io.ReadCloser) {
 
 }
 
+// Execute executes the recipe, blocking until execution is done
 func (r *recipe) Execute() {
 	if r.CmdCount() == 0 {
 		return
