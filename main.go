@@ -70,7 +70,6 @@ func main() {
 		rf := in.RelevantCmd(file)
 		var f io.ReadCloser
 		if rf != nil {
-			// pipeCommands(f, &rf.Cmds[0])
 			if rf.IgnoreFile == false {
 				f, err = os.Open(file)
 				if err != nil {
