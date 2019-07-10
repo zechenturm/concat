@@ -7,8 +7,9 @@ import (
 )
 
 type recipe struct {
-	Files []string  `yaml:"files"`
-	Cmds  []command `yaml:"commands"`
+	Files      []string  `yaml:"files"`
+	Cmds       []command `yaml:"commands"`
+	IgnoreFile bool      `yaml:"ignoreFile"`
 }
 
 // IsRelevant checks if the comand is relevant to the file(name) passed in

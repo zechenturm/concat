@@ -2,14 +2,32 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/go-yaml/yaml"
 )
 
 // BufferSize specifies the size of the read and write buffers used
 const BufferSize = 4
+
+type stringRC struct {
+	S   string
+	src io.Reader
+}
+
+func (src *stringRC) Read(b []byte) (int, error) {
+	if src.src == nil {
+		src.src = strings.NewReader(src.S)
+	}
+	return src.src.Read(b)
+}
+
+func (src *stringRC) Close() error {
+	return nil
+}
 
 type input struct {
 	Files []string `yaml:"files"`
@@ -45,17 +63,28 @@ func main() {
 	}
 
 	for _, file := range in.Files {
-		f, err := os.Open(file)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
 		rf := in.RelevantCmd(file)
+		var f io.ReadCloser
 		if rf != nil {
 			// pipeCommands(f, &rf.Cmds[0])
+			fmt.Println("relevant file:", rf)
+			if rf.IgnoreFile == false {
+				f, err = os.Open(file)
+				if err != nil {
+					fmt.Println("Error opening", file, ":", err)
+					continue
+				}
+			} else {
+				f = &stringRC{S: file}
+			}
 			rf.Init(f)
 			rf.Execute()
 		} else {
+			f, err = os.Open(file)
+			if err != nil {
+				fmt.Println("Error opening", file, ":", err)
+				continue
+			}
 			var n int
 			data := make([]byte, BufferSize)
 			for err == nil {
