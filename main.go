@@ -29,6 +29,10 @@ func (src *stringRC) Close() error {
 	return nil
 }
 
+func errorln(e ...interface{}) {
+	fmt.Fprintln(os.Stderr, e...)
+}
+
 type input struct {
 	Files []string `yaml:"files"`
 	Cmds  []recipe `yaml:"recipes"`
@@ -46,19 +50,19 @@ func (in *input) RelevantCmd(file string) *recipe {
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Println("Usage: apply <configfile>")
+		errorln("Usage: apply <configfile>")
 		return
 	}
 	data, err := ioutil.ReadFile(os.Args[1])
 	if err != nil {
-		fmt.Println(err)
+		errorln(err)
 		return
 	}
 
 	var in input
 	err = yaml.Unmarshal(data, &in)
 	if err != nil {
-		fmt.Println(err)
+		errorln(err)
 		return
 	}
 
@@ -71,7 +75,7 @@ func main() {
 			if rf.IgnoreFile == false {
 				f, err = os.Open(file)
 				if err != nil {
-					fmt.Println("Error opening", file, ":", err)
+					errorln("Error opening", file, ":", err)
 					continue
 				}
 			} else {
@@ -82,7 +86,7 @@ func main() {
 		} else {
 			f, err = os.Open(file)
 			if err != nil {
-				fmt.Println("Error opening", file, ":", err)
+				errorln("Error opening", file, ":", err)
 				continue
 			}
 			var n int
