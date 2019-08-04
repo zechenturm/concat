@@ -1,6 +1,8 @@
 # concat
 concatenate a list of files to stdout with optional intermediate processing
 
+__currently broken!__
+
 ## Usage
 
 concat needs a yaml file to specify its actions. Files specified are processed in order. If a file has no recipe to match, the file will simply be read and output to stdout. 
